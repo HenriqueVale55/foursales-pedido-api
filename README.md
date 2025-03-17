@@ -1,4 +1,4 @@
-# [Nome da Sua Aplicação]
+# [foursales-pedido-api]
 
 ![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Spring](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white)
@@ -27,7 +27,7 @@ A API foi desenvolvida para permitir o gerenciamento de pedidos, produtos e usu�
 1. **Clone o repositório:**
 
 ```bash
-git clone https://github.com/[seu-usuario]/[nome-do-repositorio].git
+git clone https://github.com/HenriqueVale55/foursales-pedido-api.git
 ```
 
 2. **Instale as dependências com Maven:**
@@ -38,11 +38,23 @@ Certifique-se de ter o Maven instalado. Execute o seguinte comando no diretório
 mvn clean install
 ```
 
-### Instale o MySQL:
+### Opção 1: Instale o MySQL:
 Certifique-se de ter o MySQL instalado na sua máquina. Você pode baixá-lo [aqui](https://dev.mysql.com/downloads/mysql/).
+
+#### Opção 2: Usando Docker
+Se você prefere usar Docker, execute o seguinte comando para iniciar um container MySQL:
+
+```bash
+docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=sua-senha -e MYSQL_DATABASE=nome-do-banco -p 3306:3306 -d mysql:latest
 
 ### Importe o dump do banco de dados:
 No diretório raiz do projeto, você encontrará um arquivo SQL chamado `dump.sql`. Importe-o no MySQL usando o seguinte comando:
+```
+
+Substitua [sua-senha] pela senha desejada para o usuário root.
+Substitua [nome-do-banco] pelo nome do banco de dados que será criado automaticamente.
+
+Após iniciar o container, você pode conectar-se ao MySQL usando o host localhost, porta 3306, e as credenciais configuradas.
 
 ```bash
 mysql -u [seu-usuario] -p [nome-do-banco] < dump.sql
@@ -87,7 +99,7 @@ A documentação da API está disponível via Swagger. Para acessá-la:
 
 1. Inicie a aplicação.
 2. Abra o navegador e acesse:
-http://localhost:8080/swagger-ui.html?spm=a2ty_o01.29997169.0.0.3d4dc921K2Jv9d
+http://localhost:8080/swagger-ui.html
 
 
 A interface do Swagger permitirá que você teste os endpoints diretamente pelo navegador.
