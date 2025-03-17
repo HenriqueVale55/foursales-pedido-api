@@ -1,6 +1,7 @@
 package com_foursales_pedido_api.services;
 
 import com_foursales_pedido_api.exceptions.EstoqueInsuficienteException;
+import com_foursales_pedido_api.exceptions.PedidoCanceladoException;
 import com_foursales_pedido_api.models.dtos.pedido.PedidoDto;
 import com_foursales_pedido_api.models.dtos.pedido.PedidoResponseDto;
 import com_foursales_pedido_api.models.dtos.produto.ProdutoResponseDto;
@@ -76,6 +77,20 @@ public class PedidoService {
             pedidos.get().forEach(p -> {
                 p.setStatus(StatusPedido.PAGO.toString());
 
+                if (p.getProduto().getQuantidadeEstoque() < p.getQuantidadeProduto()){
+
+                    p.setStatus(StatusPedido.CANCELADO.toString());
+                    pedidoRepository.save(p);
+
+                    throw new EstoqueInsuficienteException("Quantidade de estoque para o produto " +
+                            p.getProduto().getNome() + " insuficiente");
+                }
+
+                if (p.getStatus() == StatusPedido.CANCELADO.toString() || p.getStatus() == StatusPedido.CANCELADO_AUTOMATICAMENTE.toString()){
+
+                    throw new PedidoCanceladoException("Este pedido já foi cancelado, por favor crie um pedido novo ");
+                }
+
                 p.getProduto().setQuantidadeEstoque(p.getProduto().getQuantidadeEstoque() - p.getQuantidadeProduto());
 
                 pedidoRepository.save(p);
@@ -92,6 +107,9 @@ public class PedidoService {
             double valorTotal = pedidos.get().stream()
                     .mapToDouble(p -> p.getProduto().getPreco())
                     .sum();
+            double quantidadePedido = pedidos.get().stream()
+                    .mapToDouble(p -> p.getQuantidadeProduto())
+                    .sum();
             Pedido pedido = pedidos.get().get(0);
 
             List<ProdutoResponseDto> produtos = pedidos.get().stream()
@@ -100,7 +118,7 @@ public class PedidoService {
                     .toList();
 
             return new ResponseEntity<>(new PedidoResponseDto(pedido.getIdPedido(), pedido.getDataPedido(), valorTotal,
-                    produtos, pedido.getStatus()), HttpStatus.OK);
+                    produtos, pedido.getStatus(), quantidadePedido), HttpStatus.OK);
         }
         else
             return new ResponseEntity<>(new PedidoResponseDto(), HttpStatus.NOT_FOUND);
@@ -136,6 +154,9 @@ public class PedidoService {
                         double valorTotal = itensDoPedido.stream()
                                 .mapToDouble(p -> p.getProduto().getPreco() * p.getQuantidadeProduto())
                                 .sum();
+                        double quantidadePedido = itensDoPedido.stream()
+                                .mapToDouble(p -> p.getQuantidadeProduto())
+                                .sum();
 
                         Date dataPedido = itensDoPedido.get(0).getDataPedido();
                         String status = itensDoPedido.get(0).getStatus();
@@ -145,7 +166,7 @@ public class PedidoService {
                                 .map(ProdutoResponseDto::new)
                                 .toList();
 
-                        return new PedidoResponseDto(idPedido, dataPedido, valorTotal, produtos, status);
+                        return new PedidoResponseDto(idPedido, dataPedido, valorTotal, produtos, status, quantidadePedido);
                     })
                     .toList();
 
@@ -190,7 +211,9 @@ public class PedidoService {
     }
 
     public ResponseEntity<String> buscarValorFaturadoNoMes(int mes, int ano) {
-        return new ResponseEntity<>("R$ " + pedidoRepository.findValorFaturadoByMes(mes,ano), HttpStatus.OK);
+        Double valorTotal = pedidoRepository.findValorFaturadoByMes(mes,ano);
+        valorTotal = valorTotal == null ? 0d : valorTotal;
+        return new ResponseEntity<>("R$ " + valorTotal, HttpStatus.OK);
     }
     public ResponseEntity<List<UsuarioTicketMedioDTO>> buscarTicketMedioPorUsuario(){
         List<Pedido> pedidosPagos = pedidoRepository.findAllByStatus("PAGO");
